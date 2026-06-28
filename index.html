@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR Forge &#8212; AppADay 052</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #0e0e0f;
+    --surface:  #18181b;
+    --border:   #2e2e35;
+    --accent:   #7c6af7;
+    --accent2:  #b8aaff;
+    --text:     #f0eff8;
+    --muted:    #7a7a8c;
+    --success:  #4ade80;
+    --radius:   10px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* -- NAV -- */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  nav a {
+    color: var(--muted);
+    text-decoration: none;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    transition: color .2s;
+  }
+  nav a:hover { color: var(--accent2); }
+  .nav-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent2);
+    letter-spacing: 0.08em;
+  }
+
+  /* -- MAIN -- */
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px 60px;
+    gap: 32px;
+    max-width: 560px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  /* -- HEADER -- */
+  .header { text-align: center; }
+  .header h1 {
+    font-size: clamp(2rem, 6vw, 3rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    background: linear-gradient(135deg, var(--accent2) 0%, var(--accent) 60%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header p {
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  /* -- CARD -- */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    width: 100%;
+  }
+
+  /* -- FORM ELEMENTS -- */
+  label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    padding: 12px 14px;
+    resize: vertical;
+    min-height: 90px;
+    transition: border-color .2s;
+    outline: none;
+  }
+  textarea:focus { border-color: var(--accent); }
+  textarea::placeholder { color: var(--muted); }
+
+  .row {
+    display: flex;
+    gap: 16px;
+    margin-top: 20px;
+  }
+  .field { flex: 1; }
+
+  .size-grid {
+    display: flex;
+    gap: 8px;
+  }
+  .size-btn {
+    flex: 1;
+    padding: 8px 0;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--muted);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color .2s, color .2s, background .2s;
+  }
+  .size-btn.active,
+  .size-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent2);
+    background: #1e1c30;
+  }
+  .size-btn.active { background: #23204a; }
+
+  .color-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
+  }
+  input[type="color"] {
+    -webkit-appearance: none;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px;
+    background: var(--bg);
+    cursor: pointer;
+  }
+  input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+  input[type="color"]::-webkit-color-swatch { border: none; border-radius: 4px; }
+  .color-label { font-size: 0.8rem; color: var(--muted); }
+
+  /* -- PREVIEW -- */
+  .preview-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+  }
+
+  #qr-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border-radius: 8px;
+    padding: 16px;
+    min-width: 160px;
+    min-height: 160px;
+    transition: box-shadow .3s;
+  }
+  #qr-container.active {
+    box-shadow: 0 0 0 3px var(--accent), 0 8px 32px rgba(124,106,247,.25);
+  }
+
+  .empty-qr {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    color: #aaa;
+    font-size: 0.8rem;
+  }
+  .empty-qr svg { opacity: 0.3; }
+
+  /* -- DOWNLOAD BUTTON -- */
+  #download-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 28px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s, transform .1s;
+    width: 100%;
+    justify-content: center;
+  }
+  #download-btn:hover:not(:disabled) { background: #6b5ae0; }
+  #download-btn:active:not(:disabled) { transform: scale(0.98); }
+  #download-btn:disabled {
+    background: var(--border);
+    color: var(--muted);
+    cursor: not-allowed;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(12px);
+    background: var(--success);
+    color: #0a1a12;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    opacity: 0;
+    transition: opacity .25s, transform .25s;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* -- ERROR -- */
+  .err {
+    color: #f87171;
+    font-size: 0.78rem;
+    margin-top: 6px;
+    min-height: 1.1em;
+  }
+
+  /* -- LOGO UPLOAD -- */
+  .logo-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .logo-upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--muted);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color .2s, color .2s;
+    white-space: nowrap;
+    text-transform: none;
+    letter-spacing: 0;
+    margin-bottom: 0;
+  }
+  .logo-upload-btn:hover { border-color: var(--accent); color: var(--accent2); }
+  .logo-name {
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 160px;
+  }
+  .logo-clear {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 4px 6px;
+    border-radius: 4px;
+    line-height: 1;
+    transition: color .2s;
+  }
+  .logo-clear:hover { color: #f87171; }
+
+  @media (max-width: 420px) {
+    .row { flex-direction: column; gap: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="https://augustineiacopelli.github.io/appaday/">&#8592; AppADay</a>
+  <span class="nav-badge">052 &middot; QR Forge</span>
+</nav>
+
+<main>
+  <div class="header">
+    <h1>QR Forge</h1>
+    <p>Turn any URL or text into a scannable QR code.</p>
+  </div>
+
+  <div class="card">
+    <label for="qr-input">URL or Text</label>
+    <textarea id="qr-input" placeholder="https://example.com" spellcheck="false"></textarea>
+    <div class="err" id="err-msg"></div>
+
+    <div class="row">
+      <div class="field">
+        <label>Size</label>
+        <div class="size-grid">
+          <button class="size-btn" data-px="128">S</button>
+          <button class="size-btn active" data-px="200">M</button>
+          <button class="size-btn" data-px="280">L</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Colors</label>
+        <div class="color-row">
+          <input type="color" id="fg-color" value="#000000" title="Foreground">
+          <span class="color-label">on</span>
+          <input type="color" id="bg-color" value="#ffffff" title="Background">
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:20px;">
+      <label>Center Logo <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#555">(optional)</span></label>
+      <div class="logo-row">
+        <label class="logo-upload-btn" for="logo-input">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+            <path d="M8 12V3M4 6l4-4 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 13h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          Upload image
+        </label>
+        <input type="file" id="logo-input" accept="image/*" style="display:none;">
+        <span class="logo-name" id="logo-name">No file chosen</span>
+        <button class="logo-clear" id="logo-clear" style="display:none;" title="Remove logo">&#10005;</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="preview-wrap">
+    <div id="qr-container">
+      <div class="empty-qr">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+          <rect x="4" y="4" width="16" height="16" rx="2" stroke="#888" stroke-width="2" fill="none"/>
+          <rect x="8" y="8" width="8" height="8" rx="1" fill="#888"/>
+          <rect x="28" y="4" width="16" height="16" rx="2" stroke="#888" stroke-width="2" fill="none"/>
+          <rect x="32" y="8" width="8" height="8" rx="1" fill="#888"/>
+          <rect x="4" y="28" width="16" height="16" rx="2" stroke="#888" stroke-width="2" fill="none"/>
+          <rect x="8" y="32" width="8" height="8" rx="1" fill="#888"/>
+          <rect x="28" y="28" width="4" height="4" fill="#888"/>
+          <rect x="36" y="28" width="4" height="4" fill="#888"/>
+          <rect x="28" y="36" width="4" height="4" fill="#888"/>
+          <rect x="36" y="36" width="4" height="4" fill="#888"/>
+          <rect x="32" y="32" width="4" height="4" fill="#888"/>
+        </svg>
+        <span>Enter text above to generate</span>
+      </div>
+    </div>
+    <button id="download-btn" disabled>
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M8 1v9M4 7l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M2 13h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+      Download PNG
+    </button>
+  </div>
+</main>
+
+<div class="toast" id="toast">Downloaded!</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var input       = document.getElementById("qr-input");
+  var container   = document.getElementById("qr-container");
+  var downloadBtn = document.getElementById("download-btn");
+  var fgPicker    = document.getElementById("fg-color");
+  var bgPicker    = document.getElementById("bg-color");
+  var errMsg      = document.getElementById("err-msg");
+  var toast       = document.getElementById("toast");
+  var logoInput   = document.getElementById("logo-input");
+  var logoName    = document.getElementById("logo-name");
+  var logoClear   = document.getElementById("logo-clear");
+
+  var currentPx     = 200;
+  var debounceTimer = null;
+  var logoImage     = null;  // HTMLImageElement when loaded
+
+  // -- SIZE BUTTONS --
+  document.querySelectorAll(".size-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      document.querySelectorAll(".size-btn").forEach(function (b) { b.classList.remove("active"); });
+      btn.classList.add("active");
+      currentPx = parseInt(btn.getAttribute("data-px"), 10);
+      regenerate();
+    });
+  });
+
+  // -- COLOR PICKERS --
+  fgPicker.addEventListener("input", function () { regenerate(); });
+  bgPicker.addEventListener("input", function () { regenerate(); });
+
+  // -- TEXT INPUT --
+  input.addEventListener("input", function () {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(regenerate, 300);
+  });
+
+  // -- LOGO UPLOAD --
+  logoInput.addEventListener("change", function () {
+    var file = logoInput.files && logoInput.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      var img = new Image();
+      img.onload = function () {
+        logoImage = img;
+        var short = file.name.length > 22 ? file.name.slice(0, 20) + "..." : file.name;
+        logoName.textContent = short;
+        logoClear.style.display = "inline-block";
+        regenerate();
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  logoClear.addEventListener("click", function () {
+    logoImage = null;
+    logoInput.value = "";
+    logoName.textContent = "No file chosen";
+    logoClear.style.display = "none";
+    regenerate();
+  });
+
+  // -- GENERATE --
+  function regenerate() {
+    var text = input.value.trim();
+    errMsg.textContent = "";
+
+    if (!text) { clearPreview(); return; }
+
+    if (text.length > 2953) {
+      errMsg.textContent = "Text is too long (" + text.length + " / 2953 chars).";
+      clearPreview();
+      return;
+    }
+
+    try {
+      container.innerHTML = "";
+      container.classList.add("active");
+
+      // Use H-level error correction (30%) so the center logo doesn't break scannability
+      new QRCode(container, {
+        text: text,
+        width:  currentPx,
+        height: currentPx,
+        colorDark:  fgPicker.value,
+        colorLight: bgPicker.value,
+        correctLevel: QRCode.CorrectLevel.H
+      });
+
+      // qrcodejs renders the canvas asynchronously -- poll until it appears
+      waitForCanvas(function (canvas) {
+        if (logoImage) overlayLogo(canvas);
+        downloadBtn.disabled = false;
+      });
+
+
+    } catch (e) {
+      errMsg.textContent = "Could not generate QR code. Try shortening the text.";
+      clearPreview();
+    }
+  }
+
+  // -- WAIT FOR CANVAS --
+  // qrcodejs schedules its canvas draw via setTimeout(0) internally.
+  // Poll up to 500ms so we never draw the logo before the QR pixels exist.
+  function waitForCanvas(cb) {
+    var attempts = 0;
+    var max = 50; // 50 * 10ms = 500ms ceiling
+    function check() {
+      var canvas = container.querySelector("canvas");
+      if (canvas && canvas.width > 0) { cb(canvas); return; }
+      if (++attempts < max) setTimeout(check, 10);
+    }
+    check();
+  }
+
+  // -- LOGO OVERLAY --
+  function overlayLogo(canvas) {
+    if (!canvas || !logoImage) return;
+
+    var ctx    = canvas.getContext("2d");
+    var cw     = canvas.width;
+    var ch     = canvas.height;
+
+    // Logo occupies 22% of the QR width, centered
+    var logoSize   = Math.round(cw * 0.22);
+    var logoRadius = Math.round(logoSize * 0.18);
+    var lx = Math.round((cw - logoSize) / 2);
+    var ly = Math.round((ch - logoSize) / 2);
+    var pad = Math.round(logoSize * 0.08);
+
+    // White rounded-rect background so logo reads on any fg/bg combo
+    ctx.save();
+    ctx.fillStyle = "#ffffff";
+    roundRect(ctx, lx - pad, ly - pad, logoSize + pad * 2, logoSize + pad * 2, logoRadius + pad);
+    ctx.fill();
+
+    // Clip to same rounded rect, draw logo
+    ctx.beginPath();
+    roundRect(ctx, lx, ly, logoSize, logoSize, logoRadius);
+    ctx.clip();
+    ctx.drawImage(logoImage, lx, ly, logoSize, logoSize);
+    ctx.restore();
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.arcTo(x + w, y,     x + w, y + r,     r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+    ctx.lineTo(x + r, y + h);
+    ctx.arcTo(x,     y + h, x,     y + h - r, r);
+    ctx.lineTo(x,     y + r);
+    ctx.arcTo(x,     y,     x + r, y,         r);
+    ctx.closePath();
+  }
+
+  // -- CLEAR PREVIEW --
+  function clearPreview() {
+    container.innerHTML = [
+      '<div class="empty-qr">',
+      '<svg width="48" height="48" viewBox="0 0 48 48" fill="none">',
+      '<rect x="4" y="4" width="16" height="16" rx="2" stroke="#888" stroke-width="2" fill="none"/>',
+      '<rect x="8" y="8" width="8" height="8" rx="1" fill="#888"/>',
+      '<rect x="28" y="4" width="16" height="16" rx="2" stroke="#888" stroke-width="2" fill="none"/>',
+      '<rect x="32" y="8" width="8" height="8" rx="1" fill="#888"/>',
+      '<rect x="4" y="28" width="16" height="16" rx="2" stroke="#888" stroke-width="2" fill="none"/>',
+      '<rect x="8" y="32" width="8" height="8" rx="1" fill="#888"/>',
+      '<rect x="28" y="28" width="4" height="4" fill="#888"/>',
+      '<rect x="36" y="28" width="4" height="4" fill="#888"/>',
+      '<rect x="28" y="36" width="4" height="4" fill="#888"/>',
+      '<rect x="36" y="36" width="4" height="4" fill="#888"/>',
+      '<rect x="32" y="32" width="4" height="4" fill="#888"/>',
+      '</svg>',
+      '<span>Enter text above to generate</span>',
+      '</div>'
+    ].join("");
+    container.classList.remove("active");
+    downloadBtn.disabled = true;
+  }
+
+  // -- DOWNLOAD --
+  downloadBtn.addEventListener("click", function () {
+    var canvas = container.querySelector("canvas");
+    if (!canvas) return;
+
+    // Re-apply logo overlay in case canvas was re-drawn since last render
+    if (logoImage) overlayLogo(canvas);
+
+    var link = document.createElement("a");
+    var text = input.value.trim();
+    var slug = text.replace(/[^a-z0-9]/gi, "-").toLowerCase().slice(0, 30) || "qr-code";
+    link.download = "qr-" + slug + ".png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+
+    toast.classList.add("show");
+    setTimeout(function () { toast.classList.remove("show"); }, 2000);
+  });
+})();
+</script>
+</body>
+</html>
