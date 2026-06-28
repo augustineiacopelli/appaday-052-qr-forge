@@ -468,9 +468,20 @@
     regenerate();
   });
 
+  // -- NORMALIZE --
+  // Fixes common URL entry mistakes before encoding into QR
+  function normalize(raw) {
+    var t = raw.trim();
+    // Replace backslashes used as forward slashes (e.g. https:\\google.com)
+    if (/^https?:\\/i.test(t)) {
+      t = t.replace(/\\/g, '/');
+    }
+    return t;
+  }
+
   // -- GENERATE --
   function regenerate() {
-    var text = input.value.trim();
+    var text = normalize(input.value);
     errMsg.textContent = "";
 
     if (!text) { clearPreview(); return; }
@@ -598,7 +609,7 @@
     if (logoImage) overlayLogo(canvas);
 
     var link = document.createElement("a");
-    var text = input.value.trim();
+    var text = normalize(input.value);
     var slug = text.replace(/[^a-z0-9]/gi, "-").toLowerCase().slice(0, 30) || "qr-code";
     link.download = "qr-" + slug + ".png";
     link.href = canvas.toDataURL("image/png");
